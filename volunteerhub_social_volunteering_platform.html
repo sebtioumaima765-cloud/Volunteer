@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VolunteerHub – Social Volunteering Platform</title>
+    <!-- Font Awesome for crisp icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* -------------------------------------------------------------
+         * COLOR PALETTE & GLOBAL SYSTEM DESIGN TOKENS
+         * Primary Blue: #3976B9
+         * Dark Navy:    #172B4D
+         * White:        #FFFFFF
+         * Light Gray:   #F1F3F5
+         * Dark Gray:    #64748B
+         * ------------------------------------------------------------- */
+        :root {
+            --primary-blue: #3976B9;
+            --primary-blue-hover: #2d629d;
+            --dark-navy: #172B4D;
+            --white: #FFFFFF;
+            --light-gray: #F1F3F5;
+            --dark-gray: #64748B;
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 2px 4px rgba(23, 43, 77, 0.04);
+            --shadow-md: 0 4px 12px rgba(23, 43, 77, 0.08);
+            --shadow-lg: 0 10px 25px rgba(23, 43, 77, 0.12);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-full: 9999px;
+            --font-en: 'Inter', sans-serif;
+            --font-ar: 'Cairo', sans-serif;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* RTL & Typography Overrides */
+        html[dir="rtl"] {
+            font-family: var(--font-ar);
+        }
+        html[dir="ltr"] {
+            font-family: var(--font-en);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-navy);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        a:hover {
+            color: var(--primary-blue-hover);
+        }
+
+        button, input, select, textarea {
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        /* Top Simulation Admin / Code Drawer Control Bar */
+        #sim-bar {
+            background: var(--dark-navy);
+            color: var(--white);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            z-index: 1000;
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        .sim-badge {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .sim-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .sim-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--white);
+            border: none;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sim-btn:hover, .sim-btn.active {
+            background: var(--primary-blue);
+        }
+
+        /* Code Drawer Modal */
+        #code-drawer {
+            display: none;
+            position: fixed;
+            top: 45px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(23, 43, 77, 0.95);
+            z-index: 999;
+            padding: 25px;
+            overflow-y: auto;
+            color: #E2E8F0;
+        }
+
+        #code-drawer.open {
+            display: block;
+        }
+
+        .code-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #0D172A;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .code-tabs {
+            display: flex;
+            background: #172B4D;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .code-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--dark-gray);
+            border: none;
+            font-weight: 600;
+        }
+
+        .code-tab.active {
+            color: var(--white);
+            border-bottom: 3px solid var(--primary-blue);
+            background: #0D172A;
+        }
+
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #38BDF8;
+        }
+
+        /* -------------------------------------------------------------
+         * APP HEADER & NAVIGATION BAR
+         * ------------------------------------------------------------- */
+        .app-navbar {
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 500;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--dark-navy);
+            cursor: pointer;
+        }
+
+        .brand-logo i {
+            color: var(--primary-blue);
+            font-size: 1.6rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .nav-link-btn {
+            background: none;
+            border: none;
+            color: var(--dark-navy);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .nav-link-btn:hover, .nav-link-btn.active {
+            color: var(--primary-blue);
+            background: rgba(57, 118, 185, 0.08);
+        }
+
+        .badge-icon {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            background: #EF4444;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            border-radius: var(--radius-full);
+            font-weight: bold;
+        }
+
+        html[dir="rtl"] .badge-icon {
+            right: auto;
+            left: 4px;
+        }
+
+        .lang-select {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--dark-navy);
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-blue-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--dark-navy);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: #E2E8F0;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* User Quick Avatar */
+        .user-avatar-small {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            object-fit: cover;
+            border: 2px solid var(--primary-blue);
+        }
+
+        /* -------------------------------------------------------------
+         * MAIN VIEWPORT CONTAINER & VIEW MANAGEMENT
+         * ------------------------------------------------------------- */
+        #app-viewport {
+            flex: 1;
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .page-view {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .page-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards & Generic Layout Components */
+        .card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        /* -------------------------------------------------------------
+         * PAGE 1: LANDING PAGE (index.php)
+         * ------------------------------------------------------------- */
+        .hero-section {
+            background: linear-gradient(135deg, var(--dark-navy) 0%, #244376 100%);
+            color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 60px 40px;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            color: #CBD5E1;
+            max-width: 650px;
+            margin: 0 auto 30px;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark-navy);
+            margin-bottom: 30px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(57, 118, 185, 0.1);
+            color: var(--primary-blue);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 16px;
+        }
+
+        /* -------------------------------------------------------------
+         * PAGE 2 & 3: AUTH PAGES (login.php & register.php)
+         * ------------------------------------------------------------- */
+        .auth-container {
+            max-width: 480px;
+            margin: 40px auto;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-header i {
+            font-size: 2.5rem;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--dark-navy);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(57, 118, 185, 0.15);
+        }
+
+        /* -------------------------------------------------------------
+         * PAGE 4: COMMUNITY FEED (feed.php)
+         * ------------------------------------------------------------- */
+        .feed-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .feed-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar-left, .sidebar-right {
+                display: none;
+            }
+        }
+
+        /* Left Profile Card Widget */
+        .widget-profile {
+            text-align: center;
+        }
+
+        .widget-profile img {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-full);
+            object-fit: cover;
+            margin-bottom: 12px;
+            border: 3px solid var(--primary-blue);
+        }
+
+        .filter-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .filter-item {
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 4px;
+        }
+
+        .filter-item:hover, .filter-item.active {
+            background: rgba(57, 118, 185, 0.1);
+            color: var(--primary-blue);
+        }
+
+        /* Post Composer Box */
+        .create-post-prompt {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--white);
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+
+        .prompt-input {
+            flex: 1;
+            background: var(--light-gray);
+            border-radius: var(--radius-full);
+            padding: 10px 18px;
+            color: var(--dark-gray);
+        }
+
+        /* Post Card Details */
+        .post-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .author-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-full);
+            object-fit: cover;
+        }
+
+        .post-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+        }
+
+        .badge-seeking-volunteers {
+            background: #E0F2FE;
+            color: #0369A1;
+        }
+
+        .badge-offering-help {
+            background: #DCFCE7;
+            color: #15803D;
+        }
+
+        .post-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark-navy);
+        }
+
+        .post-desc {
+            color: var(--dark-navy);
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+            white-space: pre-line;
+        }
+
+        .post-meta-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .meta-pill {
+            background: var(--light-gray);
+            color: var(--dark-gray);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 380px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+
+        .post-action-btn {
+            background: none;
+            border: none;
+            color: var(--dark-gray);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .post-action-btn:hover {
+            background: var(--light-gray);
+            color: var(--primary-blue);
+        }
+
+        .post-action-btn.liked {
+            color: #EF4444;
+        }
+
+        .post-action-btn.saved {
+            color: var(--primary-blue);
+        }
+
+        /* -------------------------------------------------------------
+         * PAGE 5: CREATE POST (create-post.php)
+         * ------------------------------------------------------------- */
+        .type-selector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .type-option-card {
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .type-option-card:hover, .type-option-card.selected {
+            border-color: var(--primary-blue);
+            background: rgba(57, 118, 185, 0.05);
+        }
+
+        .type-option-card i {
+            font-size: 2rem;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+        }
+
+        /* -------------------------------------------------------------
+         * PAGE 8 & 9: INBOX & CHAT (inbox.php & chat.php)
+         * ------------------------------------------------------------- */
+        .chat-container-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            height: 650px;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container-layout {
+                grid-template-columns: 1fr;
+            }
+            .chat-threads-sidebar.hidden-mobile {
+                display: none;
+            }
+        }
+
+        .chat-threads-sidebar {
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        html[dir="rtl"] .chat-threads-sidebar {
+            border-right: none;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .thread-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .thread-item:hover, .thread-item.active {
+            background: rgba(57, 118, 185, 0.08);
+        }
+
+        .chat-main-area {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #FAFAFA;
+        }
+
+        .messages-history {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: #F8FAFC;
+        }
+
+        .msg-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .msg-sent {
+            align-self: flex-end;
+            background: var(--primary-blue);
+            color: var(--white);
+            border-bottom-right-radius: 2px;
+        }
+
+        html[dir="rtl"] .msg-sent {
+            border-bottom-right-radius: 16px;
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg-received {
+            align-self: flex-start;
+            background: var(--white);
+            color: var(--dark-navy);
+            border-bottom-left-radius: 2px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        html[dir="rtl"] .msg-received {
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-input-bar {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            background: var(--white);
+        }
+
+        /* -------------------------------------------------------------
+         * PAGE 12: ADMIN DASHBOARD (admin.php)
+         * ------------------------------------------------------------- */
+        .admin-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        html[dir="rtl"] .metric-card {
+            border-left: none;
+            border-right: 4px solid var(--primary-blue);
+        }
+
+        .metric-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark-navy);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        html[dir="rtl"] .data-table th, html[dir="rtl"] .data-table td {
+            text-align: right;
+        }
+
+        .data-table th {
+            background: #FAFAFA;
+            color: var(--dark-gray);
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .app-footer {
+            background: var(--dark-navy);
+            color: #94A3B8;
+            padding: 40px 24px 20px;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- -------------------------------------------------------------
+     * TOP SIMULATION CONTROL & CODE ARCHITECTURE DRAWER BAR
+     * ------------------------------------------------------------- -->
+    <div id="sim-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="sim-badge">L3 Graduation Project</span>
+            <span><strong>VolunteerHub</strong> Live Simulation</span>
+        </div>
+        <div class="sim-actions">
+            <button class="sim-btn" id="btn-toggle-code" onclick="toggleCodeDrawer()">
+                <i class="fa-solid fa-code"></i> View SQL Schema & Backend PHP
+            </button>
+            <span style="opacity: 0.4;">|</span>
+            <span id="current-user-status"><i class="fa-solid fa-user-check"></i> Auth: Logged In</span>
+        </div>
+    </div>
+
+    <!-- CODE & DATABASE ARCHITECTURE DRAWER -->
+    <div id="code-drawer">
+        <div class="code-container">
+            <div class="code-tabs">
+                <button class="code-tab active" onclick="switchCodeTab('sql')">volunteerhub.sql (MySQL Schema)</button>
+                <button class="code-tab" onclick="switchCodeTab('php-db')">config/database.php</button>
+                <button class="code-tab" onclick="switchCodeTab('php-post')">controllers/PostController.php</button>
+            </div>
+            <div id="code-content-sql">
+<pre>
+-- VolunteerHub Production MySQL Database Schema
+CREATE DATABASE IF NOT EXISTS `volunteerhub_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `volunteerhub_db`;
+
+-- 1. Users Table
+CREATE TABLE `users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `first_name` VARCHAR(50) NOT NULL,
+    `last_name` VARCHAR(50) NOT NULL,
+    `email` VARCHAR(100) NOT NULL UNIQUE,
+    `password` VARCHAR(255) NOT NULL,
+    `city` VARCHAR(50) NOT NULL,
+    `profile_pic` VARCHAR(255) DEFAULT 'default.png',
+    `bio` TEXT NULL,
+    `skills` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 2. Categories Table
+CREATE TABLE `categories` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name_en` VARCHAR(50) NOT NULL,
+    `name_ar` VARCHAR(50) NOT NULL,
+    `name_fr` VARCHAR(50) NOT NULL
+) ENGINE=InnoDB;
+
+-- 3. Posts Table (Handles both Volunteering Requests and Volunteer Calls)
+CREATE TABLE `posts` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `post_type` ENUM('looking_for_volunteering', 'looking_for_volunteers') NOT NULL,
+    `title` VARCHAR(150) NOT NULL,
+    `description` TEXT NOT NULL,
+    `category_id` INT NOT NULL,
+    `city` VARCHAR(50) NOT NULL,
+    `skills` VARCHAR(255) NULL,
+    `availability` VARCHAR(100) NULL,
+    `volunteers_needed` INT DEFAULT 1,
+    `activity_date` DATE NULL,
+    `contact_info` VARCHAR(100) NULL,
+    `image` VARCHAR(255) NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`)
+) ENGINE=InnoDB;
+
+-- 4. Likes Table
+CREATE TABLE `likes` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `post_id` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `unique_like` (`user_id`, `post_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 5. Comments Table
+CREATE TABLE `comments` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `post_id` INT NOT NULL,
+    `content` TEXT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 6. Saved Posts Table
+CREATE TABLE `saved_posts` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `post_id` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `unique_save` (`user_id`, `post_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 7. Conversations Table
+CREATE TABLE `conversations` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 8. Conversation Participants Table
+CREATE TABLE `conversation_participants` (
+    `conversation_id` INT NOT NULL,
+    `user_id` INT NOT NULL,
+    PRIMARY KEY (`conversation_id`, `user_id`),
+    FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 9. Messages Table
+CREATE TABLE `messages` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `conversation_id` INT NOT NULL,
+    `sender_id` INT NOT NULL,
+    `message_text` TEXT NOT NULL,
+    `is_read` TINYINT(1) DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 10. Notifications Table
+CREATE TABLE `notifications` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `type` ENUM('like', 'comment', 'message') NOT NULL,
+    `source_user_id` INT NOT NULL,
+    `post_id` INT NULL,
+    `is_read` TINYINT(1) DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 11. Reports Table (Moderation)
+CREATE TABLE `reports` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `reporter_id` INT NOT NULL,
+    `post_id` INT NOT NULL,
+    `reason` VARCHAR(255) NOT NULL,
+    `status` ENUM('pending', 'reviewed', 'dismissed') DEFAULT 'pending',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`reporter_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+</pre>
+            </div>
+            <div id="code-content-php-db" style="display: none;">
+<pre>
+&lt;?php
+// config/database.php - PDO Connection with Prepared Statements Guard
+class Database {
+    private $host = "localhost";
+    private $db_name = "volunteerhub_db";
+    private $username = "root";
+    private $password = "";
+    public $conn;
+
+    public function getConnection() {
+        $this->conn = null;
+        try {
+            $this->conn = new PDO(
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4",
+                $this->username,
+                $this->password,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false
+                ]
+            );
+        } catch(PDOException $exception) {
+            echo "Connection error: " . $exception->getMessage();
+        }
+        return $this->conn;
+    }
+}
+?&gt;
+</pre>
+            </div>
+            <div id="code-content-php-post" style="display: none;">
+<pre>
+&lt;?php
+// controllers/PostController.php - Create Post Backend API
+require_once '../config/database.php';
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(["status" => "error", "message" => "Unauthorized"]);
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $database = new Database();
+    $db = $database->getConnection();
+
+    $user_id = $_SESSION['user_id'];
+    $post_type = filter_var($_POST['post_type'], FILTER_SANITIZE_STRING);
+    $title = filter_var($_POST['title'], FILTER_SANITIZE_STRING);
+    $description = filter_var($_POST['description'], FILTER_SANITIZE_STRING);
+    $category_id = (int)$_POST['category_id'];
+    $city = filter_var($_POST['city'], FILTER_SANITIZE_STRING);
+    $skills = isset($_POST['skills']) ? filter_var($_POST['skills'], FILTER_SANITIZE_STRING) : null;
+    
+    // Type specific fields
+    $availability = $_POST['availability'] ?? null;
+    $volunteers_needed = $_POST['volunteers_needed'] ?? 1;
+    $activity_date = $_POST['activity_date'] ?? null;
+    $contact_info = $_POST['contact_info'] ?? null;
+
+    $query = "INSERT INTO posts 
+              (user_id, post_type, title, description, category_id, city, skills, availability, volunteers_needed, activity_date, contact_info) 
+              VALUES (:user_id, :post_type, :title, :description, :category_id, :city, :skills, :availability, :volunteers_needed, :activity_date, :contact_info)";
+
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(":user_id", $user_id);
+    $stmt->bindParam(":post_type", $post_type);
+    $stmt->bindParam(":title", $title);
+    $stmt->bindParam(":description", $description);
+    $stmt->bindParam(":category_id", $category_id);
+    $stmt->bindParam(":city", $city);
+    $stmt->bindParam(":skills", $skills);
+    $stmt->bindParam(":availability", $availability);
+    $stmt->bindParam(":volunteers_needed", $volunteers_needed);
+    $stmt->bindParam(":activity_date", $activity_date);
+    $stmt->bindParam(":contact_info", $contact_info);
+
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success", "message" => "Post published successfully"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Failed to create post"]);
+    }
+}
+?&gt;
+</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- -------------------------------------------------------------
+     * MAIN APPLICATION NAVBAR
+     * ------------------------------------------------------------- -->
+    <header class="app-navbar">
+        <div class="nav-container">
+            <div class="brand-logo" onclick="navigateTo('landing')">
+                <i class="fa-solid fa-hand-holding-heart"></i>
+                <span>VolunteerHub</span>
+            </div>
+
+            <ul class="nav-links">
+                <!-- Public Navigation -->
+                <li class="nav-public"><button class="nav-link-btn" onclick="navigateTo('landing')" data-i18n="nav_home">Home</button></li>
+                <li class="nav-public"><button class="nav-link-btn" onclick="navigateTo('login')" data-i18n="nav_login">Login</button></li>
+                <li class="nav-public"><button class="btn-primary" onclick="navigateTo('register')" data-i18n="nav_register">Register</button></li>
+
+                <!-- Authenticated Navigation -->
+                <li class="nav-auth" style="display:none;"><button class="nav-link-btn" onclick="navigateTo('feed')" data-i18n="nav_feed"><i class="fa-solid fa-house"></i> Feed</button></li>
+                <li class="nav-auth" style="display:none;"><button class="nav-link-btn" onclick="navigateTo('search')" data-i18n="nav_search"><i class="fa-solid fa-magnifying-glass"></i> Search</button></li>
+                <li class="nav-auth" style="display:none;">
+                    <button class="nav-link-btn" onclick="navigateTo('inbox')" data-i18n="nav_messages">
+                        <i class="fa-solid fa-envelope"></i> Messages
+                        <span class="badge-icon">2</span>
+                    </button>
+                </li>
+                <li class="nav-auth" style="display:none;">
+                    <button class="nav-link-btn" onclick="navigateTo('admin')" data-i18n="nav_admin">
+                        <i class="fa-solid fa-shield-halved"></i> Admin
+                    </button>
+                </li>
+                <li class="nav-auth" style="display:none;">
+                    <button class="nav-link-btn" onclick="navigateTo('profile')">
+                        <img id="nav-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" class="user-avatar-small" alt="Profile">
+                    </button>
+                </li>
+                <li class="nav-auth" style="display:none;">
+                    <button class="nav-link-btn" onclick="logout()" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </li>
+
+                <!-- Language Selector -->
+                <li>
+                    <select class="lang-select" onchange="changeLanguage(this.value)">
+                        <option value="en">English (EN)</option>
+                        <option value="ar">العربية (AR)</option>
+                        <option value="fr">Français (FR)</option>
+                    </select>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- -------------------------------------------------------------
+     * APPLICATION VIEW CONTAINER (12 PAGES INTEGRATED)
+     * ------------------------------------------------------------- -->
+    <main id="app-viewport">
+
+        <!-- 1. LANDING PAGE (index.php) -->
+        <section id="view-landing" class="page-view active">
+            <div class="hero-section">
+                <h1 data-i18n="hero_title">Connect. Volunteer. Make an Impact.</h1>
+                <p data-i18n="hero_subtitle">The modern social network bringing together individuals looking to give back and initiatives searching for passionate volunteers.</p>
+                <div class="hero-cta">
+                    <button class="btn-primary" style="padding: 14px 28px; font-size: 1.05rem;" onclick="navigateTo('register')" data-i18n="create_account">Create Free Account</button>
+                    <button class="btn-outline" style="color: white; border-color: white; padding: 14px 28px; font-size: 1.05rem;" onclick="navigateTo('feed')" data-i18n="browse_feed">Explore Community</button>
+                </div>
+            </div>
+
+            <h2 class="section-title" data-i18n="how_it_works">How VolunteerHub Works</h2>
+            <div class="features-grid">
+                <div class="card feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-user-plus"></i></div>
+                    <h3 data-i18n="feat_1_title" style="margin-bottom: 8px;">Single Unified Profile</h3>
+                    <p data-i18n="feat_1_desc" style="color: var(--dark-gray);">No separate recruiter accounts. Every user can offer skills or publish volunteer opportunities anytime.</p>
+                </div>
+                <div class="card feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                    <h3 data-i18n="feat_2_title" style="margin-bottom: 8px;">Dual Post Options</h3>
+                    <p data-i18n="feat_2_desc" style="color: var(--dark-gray);">Post whether you are looking for volunteers for an event or offering your personal time to a cause.</p>
+                </div>
+                <div class="card feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-comments"></i></div>
+                    <h3 data-i18n="feat_3_title" style="margin-bottom: 8px;">Direct Social Connection</h3>
+                    <p data-i18n="feat_3_desc" style="color: var(--dark-gray);">Like, comment, save opportunities, and initiate private chat conversations seamlessly.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. LOGIN PAGE (login.php) -->
+        <section id="view-login" class="page-view">
+            <div class="card auth-container">
+                <div class="auth-header">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <h2 data-i18n="login_title">Welcome Back</h2>
+                    <p data-i18n="login_sub" style="color: var(--dark-gray); font-size: 0.9rem;">Sign in to your VolunteerHub account</p>
+                </div>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label data-i18n="email">Email Address</label>
+                        <input type="email" class="form-control" required value="sarah.jenkins@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="password">Password</label>
+                        <input type="password" class="form-control" required value="password123">
+                    </div>
+                    <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="font-weight: normal; cursor: pointer;">
+                            <input type="checkbox" checked> <span data-i18n="remember_me">Remember me</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;" data-i18n="login_btn">Sign In</button>
+                </form>
+                <p style="text-align: center; margin-top: 18px; font-size: 0.9rem; color: var(--dark-gray);">
+                    <span data-i18n="no_account">Don't have an account?</span> <a href="#" onclick="navigateTo('register')" data-i18n="register_now">Register now</a>
+                </p>
+            </div>
+        </section>
+
+        <!-- 3. REGISTER PAGE (register.php) -->
+        <section id="view-register" class="page-view">
+            <div class="card auth-container" style="max-width: 540px;">
+                <div class="auth-header">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <h2 data-i18n="register_title">Join VolunteerHub</h2>
+                    <p data-i18n="register_sub" style="color: var(--dark-gray); font-size: 0.9rem;">Create your unified volunteer account</p>
+                </div>
+                <form onsubmit="handleRegister(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label data-i18n="first_name">First Name</label>
+                            <input type="text" class="form-control" required placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="last_name">Last Name</label>
+                            <input type="text" class="form-control" required placeholder="Doe">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="email">Email Address</label>
+                        <input type="email" class="form-control" required placeholder="john.doe@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="city">City / Location</label>
+                        <input type="text" class="form-control" required placeholder="e.g. Paris, New York, Cairo">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label data-i18n="password">Password</label>
+                            <input type="password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="confirm_password">Confirm Password</label>
+                            <input type="password" class="form-control" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;" data-i18n="register_btn">Create Account</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 4. COMMUNITY FEED (feed.php) -->
+        <section id="view-feed" class="page-view">
+            <div class="feed-layout">
+                <!-- Left Sidebar Profile Summary -->
+                <aside class="sidebar-left">
+                    <div class="card widget-profile">
+                        <img id="user-profile-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" alt="User">
+                        <h3 id="user-profile-name">Sarah Jenkins</h3>
+                        <p style="color: var(--dark-gray); font-size: 0.85rem;"><i class="fa-solid fa-location-dot"></i> <span id="user-profile-city">Paris, France</span></p>
+                        <hr style="margin: 15px 0; border: none; border-top: 1px solid var(--border-color);">
+                        <div style="text-align: left;">
+                            <ul class="filter-list">
+                                <li class="filter-item active" onclick="filterFeedType('all', this)"><i class="fa-solid fa-border-all"></i> <span data-i18n="filter_all">All Posts</span></li>
+                                <li class="filter-item" onclick="filterFeedType('looking_for_volunteering', this)"><i class="fa-solid fa-hand-holding-hand"></i> <span data-i18n="filter_seeking">Offering Help</span></li>
+                                <li class="filter-item" onclick="filterFeedType('looking_for_volunteers', this)"><i class="fa-solid fa-users"></i> <span data-i18n="filter_recruiting">Seeking Volunteers</span></li>
+                                <li class="filter-item" onclick="navigateTo('settings')"><i class="fa-solid fa-gear"></i> <span data-i18n="settings">Settings</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Center Main Feed Column -->
+                <main class="feed-main">
+                    <!-- Create Post Prompt -->
+                    <div class="create-post-prompt" onclick="navigateTo('create-post')">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" class="user-avatar-small" alt="User">
+                        <div class="prompt-input" data-i18n="create_post_prompt">What volunteering activity do you want to share today?</div>
+                        <button class="btn-primary" data-i18n="post_btn"><i class="fa-solid fa-pen"></i> Post</button>
+                    </div>
+
+                    <!-- Dynamic Post Feed List Container -->
+                    <div id="feed-posts-container">
+                        <!-- Posts injected via renderFeed() JavaScript -->
+                    </div>
+                </main>
+
+                <!-- Right Sidebar Widgets -->
+                <aside class="sidebar-right">
+                    <div class="card">
+                        <h4 style="margin-bottom: 12px; font-size: 1rem;" data-i18n="quick_categories">Categories</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <span class="meta-pill" style="cursor: pointer;" onclick="filterCategory('Environment')">🌱 Environment</span>
+                            <span class="meta-pill" style="cursor: pointer;" onclick="filterCategory('Education')">📚 Education</span>
+                            <span class="meta-pill" style="cursor: pointer;" onclick="filterCategory('Healthcare')">🏥 Healthcare</span>
+                            <span class="meta-pill" style="cursor: pointer;" onclick="filterCategory('Animal Welfare')">🐾 Animal Welfare</span>
+                            <span class="meta-pill" style="cursor: pointer;" onclick="filterCategory('Community')">🤝 Community</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <!-- 5. CREATE POST (create-post.php) -->
+        <section id="view-create-post" class="page-view">
+            <div class="card" style="max-width: 700px; margin: 0 auto;">
+                <h2 style="margin-bottom: 20px;" data-i18n="create_post_heading">Publish Volunteering Activity</h2>
+                
+                <!-- Option Selector -->
+                <label style="font-weight: 600; margin-bottom: 10px; display: block;" data-i18n="select_post_type">Select Post Type:</label>
+                <div class="type-selector-grid">
+                    <div class="type-option-card selected" id="opt-type-1" onclick="selectPostType('looking_for_volunteering')">
+                        <i class="fa-solid fa-user-heart"></i>
+                        <h4 data-i18n="opt_1_title">Looking for Volunteering</h4>
+                        <p style="font-size: 0.8rem; color: var(--dark-gray);" data-i18n="opt_1_desc">Offer your time & skills for a cause</p>
+                    </div>
+                    <div class="type-option-card" id="opt-type-2" onclick="selectPostType('looking_for_volunteers')">
+                        <i class="fa-solid fa-people-group"></i>
+                        <h4 data-i18n="opt_2_title">Looking for Volunteers</h4>
+                        <p style="font-size: 0.8rem; color: var(--dark-gray);" data-i18n="opt_2_desc">Recruit volunteers for your activity</p>
+                    </div>
+                </div>
+
+                <form onsubmit="handleCreatePost(event)">
+                    <div class="form-group">
+                        <label data-i18n="post_title_label">Title</label>
+                        <input type="text" id="post-input-title" class="form-control" required placeholder="e.g. Offering English Tutoring / Tree Planting Drive">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="category">Category</label>
+                        <select id="post-input-category" class="form-control">
+                            <option value="Environment">Environment</option>
+                            <option value="Education">Education</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Animal Welfare">Animal Welfare</option>
+                            <option value="Community">Community</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="city">City / Location</label>
+                        <input type="text" id="post-input-city" class="form-control" required placeholder="e.g. Cairo">
+                    </div>
+                    
+                    <!-- Dynamic Fields based on Type -->
+                    <div id="dynamic-fields-volunteering">
+                        <div class="form-group">
+                            <label data-i18n="availability">Your Availability</label>
+                            <input type="text" id="post-input-availability" class="form-control" placeholder="e.g. Weekends, 4 hours/week">
+                        </div>
+                    </div>
+
+                    <div id="dynamic-fields-recruiting" style="display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label data-i18n="volunteers_needed">Volunteers Needed</label>
+                                <input type="number" id="post-input-count" class="form-control" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label data-i18n="activity_date">Activity Date</label>
+                                <input type="date" id="post-input-date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="required_skills">Skills</label>
+                        <input type="text" id="post-input-skills" class="form-control" placeholder="e.g. Teaching, Organization, First Aid">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="description">Description</label>
+                        <textarea id="post-input-desc" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button type="button" class="btn-secondary" onclick="navigateTo('feed')" data-i18n="cancel">Cancel</button>
+                        <button type="submit" class="btn-primary" data-i18n="publish_btn">Publish Post</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 6. POST DETAILS VIEW (post-details.php) -->
+        <section id="view-post-details" class="page-view">
+            <div style="max-width: 760px; margin: 0 auto;">
+                <button class="btn-secondary" onclick="navigateTo('feed')" style="margin-bottom: 16px;"><i class="fa-solid fa-arrow-left"></i> Back to Feed</button>
+                <div id="post-detail-content">
+                    <!-- Injected dynamically via viewPostDetails(id) -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. SEARCH PAGE (search.php) -->
+        <section id="view-search" class="page-view">
+            <div class="card">
+                <h2 style="margin-bottom: 16px;" data-i18n="search_heading">Search Volunteering Opportunities</h2>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <input type="text" id="search-keyword" class="form-control" placeholder="Search by title, skills, description..." onkeyup="executeSearch()">
+                    <select id="search-category" class="form-control" onchange="executeSearch()">
+                        <option value="">All Categories</option>
+                        <option value="Environment">Environment</option>
+                        <option value="Education">Education</option>
+                        <option value="Healthcare">Healthcare</option>
+                    </select>
+                    <select id="search-city" class="form-control" onchange="executeSearch()">
+                        <option value="">All Cities</option>
+                        <option value="Paris">Paris</option>
+                        <option value="Cairo">Cairo</option>
+                        <option value="New York">New York</option>
+                        <option value="Algiers">Algiers</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="search-results-container">
+                <!-- Search results injected here -->
+            </div>
+        </section>
+
+        <!-- 8. USER PROFILE (profile.php) -->
+        <section id="view-profile" class="page-view">
+            <div class="card" style="position: relative;">
+                <div style="height: 140px; background: linear-gradient(135deg, var(--primary-blue), var(--dark-navy)); border-radius: var(--radius-sm); margin: -24px -24px 20px -24px;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: -60px; margin-bottom: 20px; padding: 0 10px;">
+                    <img id="profile-user-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" style="width: 110px; height: 110px; border-radius: 50%; border: 4px solid white; object-fit: cover;" alt="Profile">
+                    <button class="btn-outline" onclick="navigateTo('settings')"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+                </div>
+                <h2 id="profile-name">Sarah Jenkins</h2>
+                <p style="color: var(--dark-gray);"><i class="fa-solid fa-location-dot"></i> <span id="profile-city">Paris, France</span></p>
+                <p id="profile-bio" style="margin: 14px 0; color: var(--dark-navy);">Passionate about community service, environmental sustainability, and youth education.</p>
+                <div style="display: flex; gap: 8px;" id="profile-skills-tags">
+                    <span class="meta-pill">Teaching</span>
+                    <span class="meta-pill">Project Management</span>
+                    <span class="meta-pill">First Aid</span>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 16px;">User Activities & Posts</h3>
+            <div id="profile-user-posts">
+                <!-- User's own posts list -->
+            </div>
+        </section>
+
+        <!-- 9 & 10. INBOX & LIVE CHAT (inbox.php & chat.php) -->
+        <section id="view-inbox" class="page-view">
+            <div class="chat-container-layout">
+                <!-- Threads Sidebar -->
+                <div class="chat-threads-sidebar">
+                    <div style="padding: 16px; border-bottom: 1px solid var(--border-color); font-weight: 700; color: var(--dark-navy);" data-i18n="conversations">
+                        Conversations
+                    </div>
+                    <div id="chat-threads-list">
+                        <!-- Threads rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Active Chat Panel -->
+                <div class="chat-main-area">
+                    <div class="chat-header">
+                        <img id="chat-header-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150" class="user-avatar-small" alt="User">
+                        <div>
+                            <h4 id="chat-header-name">Ahmed Hassan</h4>
+                            <span style="font-size: 0.75rem; color: #10B981;">● Online</span>
+                        </div>
+                    </div>
+                    
+                    <div class="messages-history" id="chat-messages-body">
+                        <!-- Message Bubbles -->
+                    </div>
+
+                    <form class="chat-input-bar" onsubmit="handleSendMessage(event)">
+                        <input type="text" id="chat-msg-input" class="form-control" placeholder="Type a message..." required autocomplete="off">
+                        <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 11. EDIT PROFILE & SETTINGS (settings.php) -->
+        <section id="view-settings" class="page-view">
+            <div class="card" style="max-width: 650px; margin: 0 auto;">
+                <h2 style="margin-bottom: 20px;" data-i18n="settings_heading">Account Settings</h2>
+                <form onsubmit="handleSaveSettings(event)">
+                    <div class="form-group">
+                        <label data-i18n="first_name">First Name</label>
+                        <input type="text" id="setting-first-name" class="form-control" value="Sarah">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="last_name">Last Name</label>
+                        <input type="text" id="setting-last-name" class="form-control" value="Jenkins">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="city">City</label>
+                        <input type="text" id="setting-city" class="form-control" value="Paris, France">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="bio">Bio</label>
+                        <textarea id="setting-bio" class="form-control" rows="3">Passionate about community service, environmental sustainability, and youth education.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="skills_comma">Skills (comma separated)</label>
+                        <input type="text" id="setting-skills" class="form-control" value="Teaching, Project Management, First Aid">
+                    </div>
+                    <button type="submit" class="btn-primary" data-i18n="save_changes">Save Changes</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 12. ADMIN DASHBOARD (admin.php) -->
+        <section id="view-admin" class="page-view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2><i class="fa-solid fa-shield-halved" style="color: var(--primary-blue);"></i> Moderation Admin Panel</h2>
+                <span class="sim-badge">Admin Privileges Active</span>
+            </div>
+
+            <!-- Metrics Cards -->
+            <div class="admin-metrics">
+                <div class="metric-card">
+                    <div style="color: var(--dark-gray); font-size: 0.85rem;">Total Platform Users</div>
+                    <div class="metric-number">1,248</div>
+                </div>
+                <div class="metric-card">
+                    <div style="color: var(--dark-gray); font-size: 0.85rem;">Active Posts</div>
+                    <div class="metric-number">382</div>
+                </div>
+                <div class="metric-card" style="border-left-color: #EF4444;">
+                    <div style="color: var(--dark-gray); font-size: 0.85rem;">Pending Reports</div>
+                    <div class="metric-number" style="color: #EF4444;">3</div>
+                </div>
+            </div>
+
+            <!-- Reported Posts Table -->
+            <div class="card">
+                <h3 style="margin-bottom: 14px;">Flagged Content Review</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Post ID</th>
+                                <th>Reported Title</th>
+                                <th>Reason</th>
+                                <th>Reporter</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-reports-table">
+                            <tr>
+                                <td>#104</td>
+                                <td>Commercial Spam Opportunity</td>
+                                <td>Promotional Spam Content</td>
+                                <td>Jean Luc</td>
+                                <td>
+                                    <button class="btn-danger" style="padding: 4px 10px; font-size: 0.8rem;" onclick="adminDeletePost(104, this)">Delete Post</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- -------------------------------------------------------------
+     * FOOTER
+     * ------------------------------------------------------------- -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div>
+                <div style="font-weight: 800; font-size: 1.2rem; color: white; margin-bottom: 10px;">VolunteerHub</div>
+                <p style="font-size: 0.85rem;">Empowering communities through seamless social volunteering coordination.</p>
+            </div>
+            <div>
+                <h4 style="color: white; margin-bottom: 10px;">Quick Links</h4>
+                <p style="font-size: 0.85rem;"><a href="#" onclick="navigateTo('landing')" style="color: inherit;">Home</a></p>
+                <p style="font-size: 0.85rem;"><a href="#" onclick="navigateTo('feed')" style="color: inherit;">Community Feed</a></p>
+            </div>
+            <div>
+                <h4 style="color: white; margin-bottom: 10px;">Academic Info</h4>
+                <p style="font-size: 0.85rem;">Computer Science Licence 3 Graduation Project</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 VolunteerHub Platform. Designed for Licence 3 Defense.
+        </div>
+    </footer>
+
+    <!-- -------------------------------------------------------------
+     * REACTIVE JAVASCRIPT ENGINE & I18N DICTIONARY
+     * ------------------------------------------------------------- -->
+    <script>
+        /* -------------------------------------------------------------
+         * 1. TRI-LINGUAL I18N DICTIONARY ENGINE
+         * ------------------------------------------------------------- */
+        const translations = {
+            en: {
+                nav_home: "Home", nav_login: "Login", nav_register: "Register", nav_feed: "Feed",
+                nav_search: "Search", nav_messages: "Messages", nav_admin: "Admin",
+                hero_title: "Connect. Volunteer. Make an Impact.",
+                hero_subtitle: "The modern social network bringing together individuals looking to give back and initiatives searching for passionate volunteers.",
+                create_account: "Create Free Account", browse_feed: "Explore Community",
+                how_it_works: "How VolunteerHub Works",
+                feat_1_title: "Single Unified Profile", feat_1_desc: "No separate recruiter accounts. Every user can offer skills or publish volunteer opportunities anytime.",
+                feat_2_title: "Dual Post Options", feat_2_desc: "Post whether you are looking for volunteers for an event or offering your personal time to a cause.",
+                feat_3_title: "Direct Social Connection", feat_3_desc: "Like, comment, save opportunities, and initiate private chat conversations seamlessly.",
+                login_title: "Welcome Back", login_sub: "Sign in to your VolunteerHub account",
+                email: "Email Address", password: "Password", remember_me: "Remember me", login_btn: "Sign In",
+                no_account: "Don't have an account?", register_now: "Register now",
+                register_title: "Join VolunteerHub", register_sub: "Create your unified volunteer account",
+                first_name: "First Name", last_name: "Last Name", city: "City / Location", confirm_password: "Confirm Password",
+                register_btn: "Create Account", filter_all: "All Posts", filter_seeking: "Offering Help",
+                filter_recruiting: "Seeking Volunteers", settings: "Settings", create_post_prompt: "What volunteering activity do you want to share today?",
+                post_btn: "Post", quick_categories: "Categories", create_post_heading: "Publish Volunteering Activity",
+                select_post_type: "Select Post Type:", opt_1_title: "Looking for Volunteering", opt_1_desc: "Offer your time & skills for a cause",
+                opt_2_title: "Looking for Volunteers", opt_2_desc: "Recruit volunteers for your activity",
+                post_title_label: "Title", category: "Category", availability: "Your Availability",
+                volunteers_needed: "Volunteers Needed", activity_date: "Activity Date", required_skills: "Skills",
+                description: "Description", cancel: "Cancel", publish_btn: "Publish Post",
+                search_heading: "Search Volunteering Opportunities", conversations: "Conversations",
+                settings_heading: "Account Settings", bio: "Bio", skills_comma: "Skills (comma separated)", save_changes: "Save Changes"
+            },
+            ar: {
+                nav_home: "الرئيسية", nav_login: "تسجيل الدخول", nav_register: "إنشاء حساب", nav_feed: "المنشورات",
+                nav_search: "البحث", nav_messages: "الرسائل", nav_admin: "الإدارة",
+                hero_title: "تواصل. تطوع. اصنع أثراً.",
+                hero_subtitle: "الشبكة الاجتماعية الحديثة التي تجمع بين الأفراد الراغبين في العطاء والمبادرات الباحثة عن متطوعين شغوفين.",
+                create_account: "إنشاء حساب مجاني", browse_feed: "تصفح المجتمع",
+                how_it_works: "كيف يعمل VolunteerHub",
+                feat_1_title: "ملف شخصي موحد", feat_1_desc: "لا توجد حسابات منفصلة للمؤسسات. يمكن لكل مستخدم تقديم مهاراته أو نشر فرص تطوعية.",
+                feat_2_title: "خياران للمنشورات", feat_2_desc: "انشر سواء كنت تبحث عن متطوعين لحدث أو تعرض وقتك الشخصي لقضية ما.",
+                feat_3_title: "تواصل اجتماعي مباشر", feat_3_desc: "اعجب، علّق، احفظ الفرص، وابدأ محادثات خاصة بسهولة.",
+                login_title: "مرحباً بعودتك", login_sub: "سجل الدخول إلى حسابك في VolunteerHub",
+                email: "البريد الإلكتروني", password: "كلمة المرور", remember_me: "تذكرني", login_btn: "تسجيل الدخول",
+                no_account: "ليس لديك حساب؟", register_now: "سجل الآن",
+                register_title: "انضم إلى VolunteerHub", register_sub: "أنشئ حسابك التطوعي الموحد",
+                first_name: "الاسم الأول", last_name: "اللقب", city: "المدينة / الموقع", confirm_password: "تأكيد كلمة المرور",
+                register_btn: "إنشاء الحساب", filter_all: "جميع المنشورات", filter_seeking: "عرض مساعدة",
+                filter_recruiting: "طلب متطوعين", settings: "الإعدادات", create_post_prompt: "ما هو النشاط التطوعي الذي تريد مشاركته اليوم؟",
+                post_btn: "نشر", quick_categories: "التصنيفات", create_post_heading: "نشر نشاط تطوعي",
+                select_post_type: "اختر نوع المنشور:", opt_1_title: "أبحث عن فرصة تطوع", opt_1_desc: "قدم وقتك ومهاراتك لقضية ما",
+                opt_2_title: "أبحث عن متطوعين", opt_2_desc: "استقطب متطوعين لنشاطك",
+                post_title_label: "العنوان", category: "التصنيف", availability: "الأوقات المتاحة",
+                volunteers_needed: "عدد المتطوعين المطلوبين", activity_date: "تاريخ النشاط", required_skills: "المهارات",
+                description: "الوصف", cancel: "إلغاء", publish_btn: "نشر المنشور",
+                search_heading: "البحث عن الفرص التطوعية", conversations: "المحادثات",
+                settings_heading: "إعدادات الحساب", bio: "نبذة شخصية", skills_comma: "المهارات (مفصولة بفواصل)", save_changes: "حفظ التغييرات"
+            },
+            fr: {
+                nav_home: "Accueil", nav_login: "Connexion", nav_register: "Inscription", nav_feed: "Fil d'actualité",
+                nav_search: "Recherche", nav_messages: "Messages", nav_admin: "Admin",
+                hero_title: "Connectez. Engagez-vous. Impactez.",
+                hero_subtitle: "Le réseau social moderne réunissant les personnes désirant aider et les initiatives cherchant des bénévoles passionnés.",
+                create_account: "Créer un compte gratuit", browse_feed: "Explorer la communauté",
+                how_it_works: "Comment fonctionne VolunteerHub",
+                feat_1_title: "Profil Unique et Unifié", feat_1_desc: "Pas de compte recruteur séparé. Chaque utilisateur peut offrir ses compétences ou publier des opportunités.",
+                feat_2_title: "Deux Types de Publications", feat_2_desc: "Publiez si vous cherchez des bénévoles pour un événement ou si vous proposez votre temps.",
+                feat_3_title: "Interaction Sociale Directe", feat_3_desc: "Aimez, commentez, sauvegardez des opportunités et lancez des discussions privées.",
+                login_title: "Bon retour parmis nous", login_sub: "Connectez-vous à votre compte VolunteerHub",
+                email: "Adresse Email", password: "Mot de passe", remember_me: "Se souvenir de moi", login_btn: "Se Connecter",
+                no_account: "Vous n'avez pas de compte?", register_now: "S'inscrire maintenant",
+                register_title: "Rejoindre VolunteerHub", register_sub: "Créez votre compte bénévole unifié",
+                first_name: "Prénom", last_name: "Nom", city: "Ville / Emplacement", confirm_password: "Confirmer mot de passe",
+                register_btn: "Créer le compte", filter_all: "Toutes les publications", filter_seeking: "Propose son aide",
+                filter_recruiting: "Cherche des bénévoles", settings: "Paramètres", create_post_prompt: "Quel projet de bénévolat souhaitez-vous partager ?",
+                post_btn: "Publier", quick_categories: "Catégories", create_post_heading: "Publier une activité de bénévolat",
+                select_post_type: "Sélectionnez le type :", opt_1_title: "Cherche à être bénévole", opt_1_desc: "Offrez votre temps et vos compétences",
+                opt_2_title: "Recherche des bénévoles", opt_2_desc: "Recrutez des bénévoles pour votre projet",
+                post_title_label: "Titre", category: "Catégorie", availability: "Disponibilité",
+                volunteers_needed: "Bénévoles requis", activity_date: "Date de l'activité", required_skills: "Compétences",
+                description: "Description", cancel: "Annuler", publish_btn: "Publier l'annonce",
+                search_heading: "Rechercher des opportunités", conversations: "Conversations",
+                settings_heading: "Paramètres du compte", bio: "Bio", skills_comma: "Compétences (séparées par virgules)", save_changes: "Enregistrer"
+            }
+        };
+
+        let currentLang = 'en';
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            const html = document.documentElement;
+            html.setAttribute('lang', lang);
+            html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            renderFeed();
+        }
+
+        /* -------------------------------------------------------------
+         * 2. STATE & MOCK DATA
+         * ------------------------------------------------------------- */
+        let currentUser = {
+            id: 1,
+            name: "Sarah Jenkins",
+            city: "Paris, France",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
+            bio: "Passionate about community service, environmental sustainability, and youth education.",
+            skills: ["Teaching", "Project Management", "First Aid"]
+        };
+
+        let postsData = [
+            {
+                id: 1,
+                userId: 2,
+                userName: "Ahmed Hassan",
+                userCity: "Cairo, Egypt",
+                userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+                type: "looking_for_volunteers",
+                title: "Nile Riverbank Clean-up Drive",
+                category: "Environment",
+                city: "Cairo",
+                volunteersNeeded: 12,
+                date: "2026-11-20",
+                skills: "Physical Stamina, Eco-awareness",
+                description: "Join us this coming Saturday for a community cleanup along the Nile riverbank! Gloves and disposal bags will be provided. Let's keep our water clean.",
+                image: "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&q=80&w=600",
+                likes: 18,
+                liked: false,
+                saved: false,
+                comments: [
+                    { id: 1, userName: "Sarah Jenkins", text: "Great initiative! Sent you a message." }
+                ]
+            },
+            {
+                id: 2,
+                userId: 3,
+                userName: "Elena Rostova",
+                userCity: "Paris, France",
+                userAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150",
+                type: "looking_for_volunteering",
+                title: "Offering Math & Web Basics Tutoring for Youth",
+                category: "Education",
+                city: "Paris",
+                availability: "Weekends & Evenings",
+                skills: "Mathematics, HTML/CSS, French",
+                description: "I am a computer science student looking to offer free tutoring sessions for middle-school children in Paris.",
+                image: null,
+                likes: 24,
+                liked: true,
+                saved: true,
+                comments: []
+            }
+        ];
+
+        let conversations = [
+            {
+                id: 101,
+                userId: 2,
+                userName: "Ahmed Hassan",
+                userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+                lastMessage: "Looking forward to seeing you at the cleanup drive!",
+                unread: true,
+                messages: [
+                    { sender: "Sarah Jenkins", text: "Hi Ahmed! I would love to help with the river cleanup." },
+                    { sender: "Ahmed Hassan", text: "Awesome Sarah! We assemble at 8:00 AM near the main bridge." },
+                    { sender: "Ahmed Hassan", text: "Looking forward to seeing you at the cleanup drive!" }
+                ]
+            }
+        ];
+
+        let activePostTypeForm = 'looking_for_volunteering';
+        let currentFeedFilter = 'all';
+
+        /* -------------------------------------------------------------
+         * 3. NAVIGATION & VIEW SWITCHER
+         * ------------------------------------------------------------- */
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page-view').forEach(view => view.classList.remove('active'));
+            const target = document.getElementById('view-' + pageId);
+            if (target) {
+                target.classList.add('active');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (pageId === 'feed') renderFeed();
+            if (pageId === 'inbox') renderInbox();
+            if (pageId === 'profile') renderProfile();
+        }
+
+        /* Auth Simulation Handlers */
+        function handleLogin(e) {
+            e.preventDefault();
+            setAuth(true);
+            navigateTo('feed');
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            setAuth(true);
+            navigateTo('feed');
+        }
+
+        function logout() {
+            setAuth(false);
+            navigateTo('landing');
+        }
+
+        function setAuth(isLoggedIn) {
+            document.querySelectorAll('.nav-public').forEach(el => el.style.display = isLoggedIn ? 'none' : 'block');
+            document.querySelectorAll('.nav-auth').forEach(el => el.style.display = isLoggedIn ? 'block' : 'none');
+            document.getElementById('current-user-status').innerHTML = isLoggedIn ? 
+                '<i class="fa-solid fa-user-check"></i> Auth: Logged In' : 
+                '<i class="fa-solid fa-user-xmark"></i> Auth: Guest';
+        }
+
+        /* -------------------------------------------------------------
+         * 4. FEED & POST INTERACTION RENDERER
+         * ------------------------------------------------------------- */
+        function renderFeed() {
+            const container = document.getElementById('feed-posts-container');
+            if (!container) return;
+            
+            let filtered = postsData;
+            if (currentFeedFilter !== 'all') {
+                filtered = postsData.filter(p => p.type === currentFeedFilter);
+            }
+
+            container.innerHTML = filtered.map(post => `
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="author-info">
+                            <img src="${post.userAvatar}" class="author-avatar" alt="${post.userName}">
+                            <div>
+                                <h4 style="font-size: 0.95rem; font-weight: 700;">${post.userName}</h4>
+                                <span style="font-size: 0.8rem; color: var(--dark-gray);"><i class="fa-solid fa-location-dot"></i> ${post.city}</span>
+                            </div>
+                        </div>
+                        <span class="post-badge ${post.type === 'looking_for_volunteers' ? 'badge-seeking-volunteers' : 'badge-offering-help'}">
+                            ${post.type === 'looking_for_volunteers' ? 'Seeking Volunteers' : 'Offering Help'}
+                        </span>
+                    </div>
+
+                    <h3 class="post-title">${post.title}</h3>
+                    <p class="post-desc">${post.description}</p>
+
+                    <div class="post-meta-pills">
+                        <span class="meta-pill"><i class="fa-solid fa-folder"></i> ${post.category}</span>
+                        ${post.skills ? `<span class="meta-pill"><i class="fa-solid fa-wrench"></i> ${post.skills}</span>` : ''}
+                        ${post.volunteersNeeded ? `<span class="meta-pill"><i class="fa-solid fa-users"></i> Needed: ${post.volunteersNeeded}</span>` : ''}
+                    </div>
+
+                    ${post.image ? `<img src="${post.image}" class="post-image" alt="Post">` : ''}
+
+                    <div class="post-actions">
+                        <button class="post-action-btn ${post.liked ? 'liked' : ''}" onclick="toggleLike(${post.id})">
+                            <i class="fa-${post.liked ? 'solid' : 'regular'} fa-heart"></i> ${post.likes} Likes
+                        </button>
+                        <button class="post-action-btn" onclick="viewPostDetails(${post.id})">
+                            <i class="fa-regular fa-comment"></i> ${post.comments.length} Comments
+                        </button>
+                        <button class="post-action-btn ${post.saved ? 'saved' : ''}" onclick="toggleSave(${post.id})">
+                            <i class="fa-${post.saved ? 'solid' : 'regular'} fa-bookmark"></i> Save
+                        </button>
+                        <button class="post-action-btn" onclick="startDirectChat(${post.userId}, '${post.userName}', '${post.userAvatar}')">
+                            <i class="fa-regular fa-paper-plane"></i> Message
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterFeedType(type, element) {
+            currentFeedFilter = type;
+            document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+            if(element) element.classList.add('active');
+            renderFeed();
+        }
+
+        function toggleLike(postId) {
+            const post = postsData.find(p => p.id === postId);
+            if (post) {
+                post.liked = !post.liked;
+                post.likes += post.liked ? 1 : -1;
+                renderFeed();
+            }
+        }
+
+        function toggleSave(postId) {
+            const post = postsData.find(p => p.id === postId);
+            if (post) {
+                post.saved = !post.saved;
+                renderFeed();
+            }
+        }
+
+        /* -------------------------------------------------------------
+         * 5. CREATE POST FORM ENGINE
+         * ------------------------------------------------------------- */
+        function selectPostType(type) {
+            activePostTypeForm = type;
+            document.getElementById('opt-type-1').classList.toggle('selected', type === 'looking_for_volunteering');
+            document.getElementById('opt-type-2').classList.toggle('selected', type === 'looking_for_volunteers');
+
+            document.getElementById('dynamic-fields-volunteering').style.display = type === 'looking_for_volunteering' ? 'block' : 'none';
+            document.getElementById('dynamic-fields-recruiting').style.display = type === 'looking_for_volunteers' ? 'block' : 'none';
+        }
+
+        function handleCreatePost(e) {
+            e.preventDefault();
+            const title = document.getElementById('post-input-title').value;
+            const category = document.getElementById('post-input-category').value;
+            const city = document.getElementById('post-input-city').value;
+            const skills = document.getElementById('post-input-skills').value;
+            const desc = document.getElementById('post-input-desc').value;
+
+            const newPost = {
+                id: Date.now(),
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userCity: currentUser.city,
+                userAvatar: currentUser.avatar,
+                type: activePostTypeForm,
+                title: title,
+                category: category,
+                city: city,
+                skills: skills,
+                description: desc,
+                volunteersNeeded: activePostTypeForm === 'looking_for_volunteers' ? document.getElementById('post-input-count').value : null,
+                image: null,
+                likes: 0,
+                liked: false,
+                saved: false,
+                comments: []
+            };
+
+            postsData.unshift(newPost);
+            navigateTo('feed');
+        }
+
+        /* -------------------------------------------------------------
+         * 6. POST DETAILS PAGE VIEW
+         * ------------------------------------------------------------- */
+        function viewPostDetails(postId) {
+            const post = postsData.find(p => p.id === postId);
+            if (!post) return;
+
+            const container = document.getElementById('post-detail-content');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="post-header">
+                        <div class="author-info">
+                            <img src="${post.userAvatar}" class="author-avatar" alt="${post.userName}">
+                            <div>
+                                <h4>${post.userName}</h4>
+                                <span style="font-size: 0.8rem; color: var(--dark-gray);">${post.city}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h2>${post.title}</h2>
+                    <p style="margin: 15px 0;">${post.description}</p>
+
+                    <h4 style="margin: 20px 0 10px;">Comments (${post.comments.length})</h4>
+                    <div id="comments-list">
+                        ${post.comments.map(c => `
+                            <div style="background: var(--light-gray); padding: 10px 14px; border-radius: 8px; margin-bottom: 8px;">
+                                <strong>${c.userName}:</strong> ${c.text}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <form onsubmit="addComment(event, ${post.id})" style="display: flex; gap: 8px; margin-top: 15px;">
+                        <input type="text" id="comment-input-${post.id}" class="form-control" placeholder="Add a comment..." required>
+                        <button type="submit" class="btn-primary">Comment</button>
+                    </form>
+                </div>
+            `;
+            navigateTo('post-details');
+        }
+
+        function addComment(e, postId) {
+            e.preventDefault();
+            const input = document.getElementById(`comment-input-${postId}`);
+            const post = postsData.find(p => p.id === postId);
+            if (post && input.value) {
+                post.comments.push({
+                    id: Date.now(),
+                    userName: currentUser.name,
+                    text: input.value
+                });
+                viewPostDetails(postId);
+            }
+        }
+
+        /* -------------------------------------------------------------
+         * 7. SEARCH ENGINE SIMULATION
+         * ------------------------------------------------------------- */
+        function executeSearch() {
+            const keyword = document.getElementById('search-keyword').value.toLowerCase();
+            const category = document.getElementById('search-category').value;
+            const city = document.getElementById('search-city').value;
+
+            const results = postsData.filter(post => {
+                const matchesKey = post.title.toLowerCase().includes(keyword) || post.description.toLowerCase().includes(keyword);
+                const matchesCat = category === '' || post.category === category;
+                const matchesCity = city === '' || post.city === city;
+                return matchesKey && matchesCat && matchesCity;
+            });
+
+            const container = document.getElementById('search-results-container');
+            if(results.length === 0) {
+                container.innerHTML = '<div class="card" style="text-align: center; color: var(--dark-gray);">No matching posts found.</div>';
+                return;
+            }
+
+            container.innerHTML = results.map(post => `
+                <div class="card">
+                    <h4>${post.title}</h4>
+                    <p style="color: var(--dark-gray); font-size: 0.9rem;">${post.city} • ${post.category}</p>
+                    <p style="margin-top: 8px;">${post.description}</p>
+                </div>
+            `).join('');
+        }
+
+        /* -------------------------------------------------------------
+         * 8. INBOX & DIRECT MESSAGING ENGINE
+         * ------------------------------------------------------------- */
+        let activeConversationId = 101;
+
+        function renderInbox() {
+            const threadsContainer = document.getElementById('chat-threads-list');
+            threadsContainer.innerHTML = conversations.map(c => `
+                <div class="thread-item ${c.id === activeConversationId ? 'active' : ''}" onclick="selectConversation(${c.id})">
+                    <img src="${c.userAvatar}" class="user-avatar-small" alt="${c.userName}">
+                    <div style="flex:1; overflow:hidden;">
+                        <h4 style="font-size: 0.9rem; font-weight: 700;">${c.userName}</h4>
+                        <p style="font-size: 0.8rem; color: var(--dark-gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.lastMessage}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            renderChatMessages();
+        }
+
+        function selectConversation(id) {
+            activeConversationId = id;
+            renderInbox();
+        }
+
+        function renderChatMessages() {
+            const chat = conversations.find(c => c.id === activeConversationId);
+            if (!chat) return;
+
+            document.getElementById('chat-header-name').textContent = chat.userName;
+            document.getElementById('chat-header-avatar').src = chat.userAvatar;
+
+            const body = document.getElementById('chat-messages-body');
+            body.innerHTML = chat.messages.map(m => `
+                <div class="msg-bubble ${m.sender === currentUser.name ? 'msg-sent' : 'msg-received'}">
+                    ${m.text}
+                </div>
+            `).join('');
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function handleSendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-msg-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chat = conversations.find(c => c.id === activeConversationId);
+            if (chat) {
+                chat.messages.push({ sender: currentUser.name, text: text });
+                chat.lastMessage = text;
+                input.value = '';
+                renderInbox();
+
+                // Auto reply simulation
+                setTimeout(() => {
+                    chat.messages.push({ sender: chat.userName, text: "Thanks for reaching out! I'll get back to you shortly." });
+                    chat.lastMessage = "Thanks for reaching out! I'll get back to you shortly.";
+                    renderInbox();
+                }, 1000);
+            }
+        }
+
+        function startDirectChat(userId, userName, userAvatar) {
+            let chat = conversations.find(c => c.userId === userId);
+            if (!chat) {
+                chat = {
+                    id: Date.now(),
+                    userId: userId,
+                    userName: userName,
+                    userAvatar: userAvatar,
+                    lastMessage: "Started a new conversation",
+                    messages: []
+                };
+                conversations.unshift(chat);
+            }
+            activeConversationId = chat.id;
+            navigateTo('inbox');
+        }
+
+        /* -------------------------------------------------------------
+         * 9. PROFILE & SETTINGS ENGINE
+         * ------------------------------------------------------------- */
+        function renderProfile() {
+            document.getElementById('profile-name').textContent = currentUser.name;
+            document.getElementById('profile-city').textContent = currentUser.city;
+            document.getElementById('profile-bio').textContent = currentUser.bio;
+            
+            const skillsContainer = document.getElementById('profile-skills-tags');
+            skillsContainer.innerHTML = currentUser.skills.map(s => `<span class="meta-pill">${s}</span>`).join('');
+
+            const userPosts = postsData.filter(p => p.userId === currentUser.id);
+            const userPostsContainer = document.getElementById('profile-user-posts');
+            if (userPosts.length === 0) {
+                userPostsContainer.innerHTML = '<div class="card" style="color: var(--dark-gray);">You have not published any posts yet.</div>';
+            } else {
+                userPostsContainer.innerHTML = userPosts.map(p => `
+                    <div class="card">
+                        <h4>${p.title}</h4>
+                        <p style="color: var(--dark-gray); font-size: 0.85rem;">Published in ${p.category}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function handleSaveSettings(e) {
+            e.preventDefault();
+            const first = document.getElementById('setting-first-name').value;
+            const last = document.getElementById('setting-last-name').value;
+            currentUser.name = `${first} ${last}`;
+            currentUser.city = document.getElementById('setting-city').value;
+            currentUser.bio = document.getElementById('setting-bio').value;
+            const skillsStr = document.getElementById('setting-skills').value;
+            currentUser.skills = skillsStr.split(',').map(s => s.trim());
+
+            document.getElementById('user-profile-name').textContent = currentUser.name;
+            document.getElementById('user-profile-city').textContent = currentUser.city;
+
+            navigateTo('profile');
+        }
+
+        /* -------------------------------------------------------------
+         * 10. ADMIN MODERATION ACTIONS
+         * ------------------------------------------------------------- */
+        function adminDeletePost(postId, btn) {
+            postsData = postsData.filter(p => p.id !== postId);
+            const row = btn.closest('tr');
+            if (row) row.remove();
+        }
+
+        /* -------------------------------------------------------------
+         * 11. CODE DRAWER CONTROLLER
+         * ------------------------------------------------------------- */
+        function toggleCodeDrawer() {
+            const drawer = document.getElementById('code-drawer');
+            drawer.classList.toggle('open');
+        }
+
+        function switchCodeTab(tab) {
+            document.querySelectorAll('.code-tab').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('code-content-sql').style.display = tab === 'sql' ? 'block' : 'none';
+            document.getElementById('code-content-php-db').style.display = tab === 'php-db' ? 'block' : 'none';
+            document.getElementById('code-content-php-post').style.display = tab === 'php-post' ? 'block' : 'none';
+        }
+
+        /* Initial Setup */
+        window.onload = function() {
+            setAuth(true);
+            renderFeed();
+        };
+    </script>
+</body>
+</html>
